@@ -1,26 +1,23 @@
 ; Simple number guessing game
 ; Started with: start-over()
-(defun get-midpoint (small big)
-  (ash (+ small big) -1))
-
-(defun ask-if-bigger-or-smaller (small big)
-  (format t "Is your number bigger or smaller?")
-  (setf input read)
-  (case input
-	((bigger) (bigger(small big)))
-	((smaller) (smaller(small big)))
-	(otherwise (smaller(small big)))))
-
-(defun smaller (small big)
-  (ask-if-bigger-or-smaller(small (1-(get-midpoint(small big))))))
-
-(defun bigger (small big)
-  (ask-if-bigger-or-smaller(small (1-(get-midpoint(small big))))))
-
-(defun start-over()
-  (defparameter *small* 1)
-  (defparameter *big* 100)
-  (ask-if-bigger-or-smaller(*small* *big*)))
+;(defun get-midpoint (small big)
+  ;(ash (+ small big) -1))
+;
+;(defun ask-if-bigger-or-smaller (small big)
+  ;(format t "Is your number bigger or smaller?")
+  ;(case read
+	;((bigger) (bigger(small big)))
+	;((smaller) (smaller(small big)))
+	;(otherwise (smaller(small big)))))
+;
+;(defun smaller (small big)
+  ;(ask-if-bigger-or-smaller(small (1- (get-midpoint(small big))))))
+;
+;(defun bigger (small big)
+  ;(ask-if-bigger-or-smaller((1- (get-midpoint(small big))) big)))
+;
+;(defun start-over ()
+  ;(ask-if-bigger-or-smaller('1 '100)))
 
 ; Case Statements
 (defvar *arch-enemy* nil)
@@ -100,3 +97,51 @@
 	 (push (list object *location*) *object-locations*)
 	 `(you drop the ,object))
 	(t '(you do not have that to drop.))))
+
+; printing
+(defun say-hello ()
+  (princ "Please type your name:")
+  (let ((name (read-line)))
+	(princ "Nice to meet you, ")
+	(princ name)))
+   
+; game repl
+(defun game-repl ()
+  (let ((cmd (game-read)))
+	(unless (eq (car cmd) 'quit)
+	  (game-print (game-eval cmd))
+	  (game-repl))))
+
+(defun game-read ()
+  (let ((cmd (read-from-string
+			   (concatenate 'string "(" (read-line) ")"))))
+	(flet ((quote-it (x)
+					 (list 'quote x)))
+	  (cons (car cmd) (mapcar #'quote-it (cdr cmd))))))
+
+(defparameter *allowed-commands* '(look walk pickup inventory drop))
+
+(defun game-eval (sexp)
+  (if (member (car sexp) *allowed-commands*)
+	(eval sexp)
+	'(i do no know that command.)))
+
+(defun tweak-text (lst caps lit)
+  (when lst
+	(let ((item (car lst))
+		  (rest (cdr lst)))
+	  (cond ((eq item #\space) (cons item (tweak-text rest caps lit)))
+			((member item '(#\! #\? #\.)) (cons item (tweak-text rest t lit)))
+			((eq item #\") (tweak-text rest caps (not lit)))
+			(lit (cons item(tweak-text rest nil lit)))
+			((or caps lit) (cons (char-upcase item) (tweak-text rest nil lit)))
+			(t (cons (char-downcase item) (tweak-text rest nil nil)))))))
+
+(defun game-print (lst)
+  (princ (coerce (tweak-text (coerce (string-trim "() "
+												  (prin1-to-string lst))
+									 'list)
+							 t
+							 nil)
+				 'string))
+  (fresh-line))
