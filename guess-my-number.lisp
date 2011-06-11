@@ -225,14 +225,15 @@ is a giant welding torch in the corner.))))
 				   (cdar lst)))
 		   edges))
 
-(defun ugraph->dot (nodes edges)
+
+(defun agraph->dot (nodes edges edge-function)
   (princ "graph{")
   (nodes->dot nodes)
-  (uedges->dot edges)
+  (funcall edge-function edges)
   (princ "}"))
 
 (defun ugraph->png (fname nodes edges)
   (dot->png fname
 			(lambda ()
-			  (ugraph->dot nodes edges))))
+			  (agraph->dot nodes edges #'uedges->dot))))
 
